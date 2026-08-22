@@ -69,9 +69,7 @@ export default function Header() {
             <span className="grid size-8 place-items-center rounded-lg bg-brand text-brand-foreground shadow-sm">
               <Wrench className="size-4" />
             </span>
-            <span className="text-lg">
-              App<span className="text-brand">3</span> Toolbox
-            </span>
+            <span className="text-lg">Toolbox</span>
           </Link>
 
           <nav className="ml-6 hidden items-center gap-1 text-sm md:flex">

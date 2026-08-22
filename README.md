@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/logo.png" width="140" alt="App3 Toolbox">
+  <img src="docs/logo.png" width="140" alt="Toolbox">
 </p>
 
-<h1 align="center">App3 Toolbox</h1>
+<h1 align="center">Toolbox</h1>
 
 <p align="center">
   <strong>Herramientas para PDF e imágenes, self-hosted.</strong><br>
@@ -93,8 +93,8 @@ El backend descubre los plugins escaneando `backend/tools/*.py`.
 Requisitos: Docker + Docker Compose.
 
 ```bash
-git clone https://github.com/Xainner/app3-toolbox.git
-cd app3-toolbox
+git clone https://github.com/Xainner/toolbox.git
+cd toolbox
 docker compose up -d --build
 ```
 

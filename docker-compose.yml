@@ -1,7 +1,7 @@
 services:
   api:
     build: ./backend
-    container_name: app3-api
+    container_name: toolbox-api
     restart: unless-stopped
     volumes:
       - ./data:/srv/data
@@ -11,7 +11,7 @@ services:
 
   web:
     build: ./frontend
-    container_name: app3-web
+    container_name: toolbox-web
     restart: unless-stopped
     depends_on:
       - api

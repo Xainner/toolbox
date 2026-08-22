@@ -1,4 +1,4 @@
-"""App3 Toolbox — API FastAPI."""
+"""Toolbox — API FastAPI."""
 from __future__ import annotations
 
 import json
@@ -23,7 +23,7 @@ DB_PATH = DATA_DIR / "app3.db"
 
 load_all()
 
-app = FastAPI(title="App3 Toolbox API", version="0.1.0")
+app = FastAPI(title="Toolbox API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

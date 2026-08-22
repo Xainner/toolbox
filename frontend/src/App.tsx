@@ -44,7 +44,7 @@ export default function App() {
           </Routes>
         </main>
         <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-          App3 Toolbox · self-hosted · casa3090
+          Toolbox · self-hosted · casa3090
         </footer>
       </div>
       <Toaster position="bottom-right" richColors closeButton />
