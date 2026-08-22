@@ -1,0 +1,22 @@
+# Node
+node_modules/
+dist/
+*.local
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Datos locales
+backend/data/*.db*
+
+# Entorno
+.env
+.DS_Store
+
+# Artefactos de prueba
+backend/_smoke/
+backend/data/
+logo.png

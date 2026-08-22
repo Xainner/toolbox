@@ -1,0 +1,18 @@
+services:
+  api:
+    build: ./backend
+    container_name: app3-api
+    restart: unless-stopped
+    volumes:
+      - ./data:/srv/data
+    environment:
+      - TZ=America/Costa_Rica
+
+  web:
+    build: ./frontend
+    container_name: app3-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3090:80"

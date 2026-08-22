@@ -1,0 +1,12 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+python-multipart==0.0.20
+pypdf==5.6.0
+pikepdf==9.7.0
+Pillow==11.2.1
+img2pdf==0.6.1
+rembg==2.0.61
+onnxruntime==1.22.0
+pymupdf==1.26.3
+reportlab==4.4.2
+cryptography>=44.0
