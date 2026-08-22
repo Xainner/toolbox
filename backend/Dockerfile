@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /srv
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libglib2.0-0 libgl1 libjpeg62-turbo zlib1g \
+    libglib2.0-0 libgl1 libjpeg62-turbo zlib1g fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

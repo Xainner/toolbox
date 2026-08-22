@@ -80,6 +80,34 @@ run("compress-image", [img1, jpg], {"quality": 60, "scale": 75})
 run("resize-image", [img1, jpg], {"mode": "percent", "width": 50, "height": 50, "keep_ratio": True})
 run("resize-image", [jpg], {"mode": "pixels", "width": 200, "height": None, "keep_ratio": True})
 
+# --- iLoveIMG v2 ---
+from PIL import Image as PILImage
+from PIL import ImageDraw as PILImageDraw
+
+cara = WORK / "cara.jpg"  # imagen sintetica "tipo cara" para pixelar
+im = PILImage.new("RGB", (320, 320), (235, 220, 200))
+d = PILImageDraw.Draw(im)
+d.ellipse([90, 70, 230, 210], fill=(210, 170, 140))  # rostro ovalado
+d.ellipse([125, 120, 145, 140], fill=(40, 40, 40))   # ojo izq
+d.ellipse([175, 120, 195, 140], fill=(40, 40, 40))   # ojo der
+im.save(cara)
+
+run("crop-image", [img1, jpg], {"left": 50, "top": 40, "width": 200, "height": 150})
+run("rotate-image", [img1, jpg], {"angle": "90", "flip": "h"})
+run("watermark-image", [img1], {"text": "(c) Toolbox", "position": "bottom-right", "opacity": 60, "size": 40})
+run("convert-to-jpg", [img1], {"background": "white", "quality": 85})
+run("create-meme", [img1], {"top_text": "cuando el deploy", "bottom_text": "funciona a la primera", "size_pct": 10})
+
+try:
+    import cv2  # noqa
+    run("pixelate-faces", [cara], {"pixel": 12, "mode": "pixelate"})
+    HAS_CV2 = True
+except ImportError:
+    print("SKIP pixelate-faces (opencv no instalado local)")
+    HAS_CV2 = False
+
+run("upscale-image", [img1], {"factor": "2", "sharpen": True})
+
 # Errores esperados
 from tools.common import ToolError
 

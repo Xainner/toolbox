@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="#-caracter%C3%ADsticas"><img alt="Herramientas" src="https://img.shields.io/badge/herramientas-13-2563EB?style=for-the-badge"></a>
+  <a href="#-caracter%C3%ADsticas"><img alt="Herramientas" src="https://img.shields.io/badge/herramientas-20-2563EB?style=for-the-badge"></a>
   <a href="#-instalaci%C3%B3n-con-docker"><img alt="Docker" src="https://img.shields.io/badge/docker-ready-2496ED?style=for-the-badge&logo=docker&logoColor=white"></a>
   <a href="LICENSE"><img alt="Licencia" src="https://img.shields.io/badge/licencia-MIT-10B981?style=for-the-badge"></a>
 </p>
@@ -34,7 +34,7 @@ nada a la nube de nadie más.
 
 ## ✨ Características
 
-- **13 herramientas listas**: PDF (unir, dividir por rangos o páginas, comprimir, rotar,
+- **20 herramientas listas**: PDF (unir, dividir por rangos o páginas, comprimir, rotar,
   JPG↔PDF, marca de agua, proteger/desbloquear AES) e imagen (quitar fondo con IA local,
   convertir JPG/PNG/WEBP, comprimir, redimensionar).
 - **Quitar fondo con IA de verdad**: modelos locales [rembg](https://github.com/danielgatis/rembg)
@@ -65,6 +65,13 @@ nada a la nube de nadie más.
 | ♻️ | **Convertir imagen** | JPG ↔ PNG ↔ WEBP |
 | 📉 | **Comprimir imagen** | Calidad + reescalado, PNG→JPG automático |
 | 📐 | **Redimensionar** | Por porcentaje o píxeles manteniendo proporción |
+| ✂️ | **Recortar imagen** | Rectángulo definido en píxeles |
+| 🔄 | **Girar imagen** | 90°/180°/270° y espejo horizontal/vertical en lote |
+| 💧 | **Marca de agua imagen** | Texto con posición, color, tamaño y transparencia |
+| 📥 | **Convertir a JPG** | PNG, WEBP, GIF, BMP, TIFF y **HEIC de iPhone** → JPG por lotes |
+| 😄 | **Crear meme** | Texto clásico arriba/abajo con contorno automático |
+| 🙈 | **Pixelar caras** | Detección facial local (OpenCV) + pixelado o desenfoque |
+| 🔍 | **Ampliar imagen** | 2x / 4x con remuestreo LANCZOS y enfoque posterior |
 
 ## 🏗️ Arquitectura
 
@@ -116,7 +123,7 @@ cd frontend
 npm install && npm run dev
 ```
 
-Smoke test del backend: `python smoke_test.py` (ejercita las 13 herramientas con archivos generados).
+Smoke test del backend: `python smoke_test.py` (ejercita las 20 herramientas con archivos generados).
 
 ## ➕ Agregar una herramienta nueva
 

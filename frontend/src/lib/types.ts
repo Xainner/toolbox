@@ -13,6 +13,10 @@ import {
   Repeat,
   Minimize2,
   Maximize2,
+  Crop,
+  Laugh,
+  Grid3x3,
+  ZoomIn,
 } from "lucide-react";
 
 /** Opción de formulario declarada por una herramienta */
@@ -58,6 +62,10 @@ export const TOOL_ICONS: Record<string, LucideIcon> = {
   repeat: Repeat,
   minimize: Minimize2,
   maximize: Maximize2,
+  crop: Crop,
+  laugh: Laugh,
+  grid: Grid3x3,
+  zoom: ZoomIn,
 };
 
 export function toolIcon(key: string): LucideIcon {
