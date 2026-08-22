@@ -19,4 +19,5 @@ backend/data/*.db*
 # Artefactos de prueba
 backend/_smoke/
 backend/data/
-logo.png
+/logo.png
+models/
