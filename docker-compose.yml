@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./data:/srv/data
+      - ./models:/srv/models
     environment:
       - TZ=America/Costa_Rica
 

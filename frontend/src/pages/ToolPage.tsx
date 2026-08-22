@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -162,6 +162,7 @@ export default function ToolPage() {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<JobResult | null>(null);
+  const pickerRef = useRef<(() => void) | null>(null);
 
   const schema = useMemo(() => (tool ? buildSchema(tool) : z.object({})), [tool]);
   const form = useForm<Record<string, unknown>>({
@@ -181,7 +182,8 @@ export default function ToolPage() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (files.length === 0) {
-      toast.error("Agrega al menos un archivo");
+      toast.info("Primero agrega archivos", { description: "Abriendo el selector…" });
+      pickerRef.current?.();
       return;
     }
     setRunning(true);
@@ -247,6 +249,7 @@ export default function ToolPage() {
                 accept={tool.accept}
                 multiple={tool.multiple}
                 disabled={running}
+                registerPicker={(fn) => (pickerRef.current = fn)}
               />
             </div>
           </Card>
@@ -262,10 +265,20 @@ export default function ToolPage() {
               />
             </div>
             <div className="mt-auto px-5">
-              <Button type="submit" variant="brand" size="lg" className="w-full" disabled={running || files.length === 0}>
+              <Button
+                type="submit"
+                variant="brand"
+                size="lg"
+                className="w-full"
+                disabled={running}
+              >
                 {running ? (
                   <>
                     <Loader2 className="size-4 animate-spin" /> Procesando…
+                  </>
+                ) : files.length === 0 ? (
+                  <>
+                    <PlayCircle className="size-5" /> Elegir archivos
                   </>
                 ) : (
                   <>

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -103,15 +103,26 @@ interface DropzoneProps {
   accept: string[];
   multiple: boolean;
   disabled?: boolean;
+  /** Registra una función para abrir el selector de archivos desde fuera */
+  registerPicker?: (open: () => void) => void;
 }
 
 /**
  * Zona de carga con drag & drop nativo (soltar archivos del SO)
  * y reordenamiento con dnd-kit cuando la herramienta acepta varios.
  */
-export default function FileDropzone({ files, onChange, accept, multiple, disabled }: DropzoneProps) {
+export default function FileDropzone({ files, onChange, accept, multiple, disabled, registerPicker }: DropzoneProps) {
   const [dragOver, setDragOver] = useState(false);
   const inputId = `dz-input-${accept.join("-").replace(/\W/g, "")}-${multiple ? "m" : "s"}`;
+
+  const openPicker = useCallback(() => {
+    const el = document.getElementById(inputId) as HTMLInputElement | null;
+    el?.click();
+  }, [inputId]);
+
+  useEffect(() => {
+    registerPicker?.(openPicker);
+  }, [registerPicker, openPicker]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),

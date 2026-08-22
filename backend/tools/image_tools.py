@@ -30,11 +30,37 @@ def _save(img: Image.Image, dest: Path, fmt: str, quality: int = 90):
     img.save(dest, format=fmt_up, **params)
 
 
+# Cache de sesiones por modelo: recargar un modelo por archivo es muy costoso
+_SESSIONS: dict[str, object] = {}
+
+
+def _get_session(model: str):
+    from rembg import new_session
+    if model not in _SESSIONS:
+        _SESSIONS[model] = new_session(model)
+    return _SESSIONS[model]
+
+
 @register(ToolMeta(
     id="remove-bg", name="Quitar fondo (IA)", category="imagen",
     description="Elimina el fondo de la imagen con IA local (rembg). Devuelve PNG transparente.",
     multiple=True, accept=RASTER, output_hint="PNG con fondo transparente", icon="eraser",
     options=[
+        {"name": "model", "label": "Modelo IA", "type": "select",
+         "choices": [
+             {"value": "isnet-general-use", "label": "ISNet · alta precisión (recomendado)"},
+             {"value": "birefnet-general-lite", "label": "BiRefNet Lite · máxima precisión"},
+             {"value": "birefnet-portrait", "label": "BiRefNet Portrait · personas/retratos"},
+             {"value": "u2netp", "label": "Rápido · menor precisión"},
+         ],
+         "default": "isnet-general-use",
+         "help": "Los modelos grandes descargan una sola vez y quedan en el servidor"},
+        {"name": "post_process", "label": "Limpieza de máscara", "type": "switch", "default": True,
+         "help": "elimina salpicados y ruido en los bordes"},
+        {"name": "alpha_matting", "label": "Alpha matting (cabello/bordes finos)", "type": "switch",
+         "default": False},
+        {"name": "erode", "label": "Erosión de borde (px)", "type": "number", "default": 8,
+         "min": 0, "max": 40, "help": "solo con alpha matting"},
         {"name": "post", "label": "Fondo resultante", "type": "select",
          "choices": [
              {"value": "transparent", "label": "Transparente"},
@@ -49,19 +75,37 @@ def _save(img: Image.Image, dest: Path, fmt: str, quality: int = 90):
 def remove_bg(files: List[Path], options: dict, workdir: Path) -> List[Path]:
     files = filter_by_accept(files, RASTER)
     post = options.get("post", "transparent")
+    model = str(options.get("model") or "isnet-general-use")
 
     try:
-        from rembg import remove, new_session
+        from rembg import remove
     except ImportError:
         raise ToolError("Motor de IA no disponible en este despliegue")
 
-    session = new_session("u2netp")  # modelo liviano (~4MB), se descarga la primera vez
+    session = _get_session(model)
+
+    alpha_matting = bool(options.get("alpha_matting", False))
+    erode = int(options.get("erode") or 0)
+    kwargs = {
+        "session": session,
+        "post_process": bool(options.get("post_process", False)),
+    }
+    if alpha_matting:
+        try:
+            import pymatting  # noqa: F401
+        except ImportError:
+            raise ToolError("Alpha matting no está disponible en este despliegue")
+        kwargs["alpha_matting"] = True
+        kwargs["alpha_matting_foreground_threshold"] = 240
+        kwargs["alpha_matting_background_threshold"] = 15
+        kwargs["alpha_matting_erodesize"] = max(1, erode)
+
     outs = []
     for src in files:
         inp = Image.open(src).convert("RGBA")
         buf_in = io.BytesIO()
         inp.save(buf_in, format="PNG")
-        result = remove(buf_in.getvalue(), session=session)
+        result = remove(buf_in.getvalue(), **kwargs)
         out_img = Image.open(io.BytesIO(result)).convert("RGBA")
 
         if post != "transparent":
