@@ -94,6 +94,13 @@ def _parse_print_box(conf: dict):
             ],
             "default": "black-shirt-v1",
         },
+        {
+            "name": "remove_bg",
+            "label": "Quitar fondo autom\u00e1ticamente (IA)",
+            "type": "switch",
+            "default": False,
+            "help": "Recorta el dise\u00f1o con el modelo de alta calidad (BiRefNet) antes de componer. La primera vez descarga el modelo al servidor.",
+        },
         {"name": "scale", "label": "Escala del dise\u00f1o (%)", "type": "number", "default": 90, "min": 10, "max": 150},
         {"name": "offset_x", "label": "Mover horizontal (px)", "type": "number", "default": 0, "min": -300, "max": 300},
         {"name": "offset_y", "label": "Mover vertical (px)", "type": "number", "default": 0, "min": -300, "max": 300},
@@ -110,6 +117,17 @@ def _parse_print_box(conf: dict):
 ))
 def product_mockup(files: List[Path], options: dict, workdir: Path) -> List[Path]:
     src = single(files, "product-mockup")
+    if options.get("remove_bg"):
+        from tools.image_tools import remove_bg as _remove_bg
+
+        bg_out = _remove_bg(
+            [src],
+            {"preset": "quality", "edge_mode": "decontaminate", "post": "transparent"},
+            workdir,
+        )
+        if not bg_out:
+            raise ToolError("No se pudo quitar el fondo del dise\u00f1o")
+        src = bg_out[0]
     templates = _load_templates()
 
     template_id = str(options.get("template") or "black-shirt-v1")
