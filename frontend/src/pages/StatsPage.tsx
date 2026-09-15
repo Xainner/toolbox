@@ -11,6 +11,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer,
 import { ArrowUpDown, Activity } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTools } from "@/App";
 
 interface JobRow {
   id: number;
@@ -35,23 +36,27 @@ export default function StatsPage() {
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
+  const [loading, setLoading] = useState(true);
+  const { tools } = useTools();
+  const names = useMemo(() => new Map(tools.map((tool) => [tool.id, tool.name])), [tools]);
 
   useEffect(() => {
     fetch("/api/stats")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`Error ${r.status}`))))
       .then((j) => setJobs(j.jobs ?? []))
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
   const columns = useMemo(
     () => [
-      helper.accessor("tool_id", { header: "Herramienta", cell: (c) => <span className="font-medium">{c.getValue()}</span> }),
+      helper.accessor("tool_id", { header: "Herramienta", cell: (c) => <span className="font-medium">{names.get(c.getValue()) ?? c.getValue()}</span> }),
       helper.accessor("files", { header: "Archivos" }),
       helper.accessor("status", {
         header: "Estado",
         cell: (c) => (
-          <Badge variant={c.getValue() === "ok" ? "brand" : "destructive"}>
-            {c.getValue() === "ok" ? "OK" : c.getValue()}
+          <Badge variant={["ok", "succeeded"].includes(c.getValue()) ? "brand" : c.getValue() === "failed" || c.getValue() === "error" ? "destructive" : "outline"}>
+            {["ok", "succeeded"].includes(c.getValue()) ? "OK" : c.getValue()}
           </Badge>
         ),
       }),
@@ -61,7 +66,7 @@ export default function StatsPage() {
       }),
       helper.accessor("created_at", { header: "Cuándo", cell: (c) => timeAgo(c.getValue()) }),
     ],
-    []
+    [names]
   );
 
   const table = useReactTable({
@@ -76,10 +81,10 @@ export default function StatsPage() {
   const byTool = useMemo(() => {
     const counts = new Map<string, number>();
     for (const j of jobs) counts.set(j.tool_id, (counts.get(j.tool_id) ?? 0) + 1);
-    return [...counts.entries()].map(([name, trabajos]) => ({ name, trabajos })).sort((a, b) => b.trabajos - a.trabajos);
-  }, [jobs]);
+    return [...counts.entries()].map(([id, trabajos]) => ({ name: names.get(id) ?? id, trabajos })).sort((a, b) => b.trabajos - a.trabajos);
+  }, [jobs, names]);
 
-  const okCount = jobs.filter((j) => j.status === "ok").length;
+  const okCount = jobs.filter((j) => ["ok", "succeeded"].includes(j.status)).length;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -92,9 +97,11 @@ export default function StatsPage() {
         <Card className="mt-6 border-destructive/40 p-4 text-sm text-destructive">API sin conexión: {error}</Card>
       )}
 
-      {!error && (
+      {loading && <div className="mt-6 h-32 animate-pulse rounded-xl border bg-card" aria-label="Cargando actividad" />}
+
+      {!error && !loading && (
         <>
-          <div className="mt-6 grid grid-cols-3 gap-4">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Card className="gap-1 py-4">
               <p className="px-5 text-xs text-muted-foreground uppercase">Trabajos</p>
               <p className="px-5 text-2xl font-bold">{jobs.length}</p>
@@ -122,15 +129,15 @@ export default function StatsPage() {
                       cursor={{ fill: "var(--accent)" }}
                       contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--popover-foreground)" }}
                     />
-                    <Bar dataKey="trabajos" fill="var(--brand)" radius={[6, 6, 0, 0]} maxBarSize={48} />
+                    <Bar dataKey="trabajos" fill="var(--brand)" radius={[6, 6, 0, 0]} maxBarSize={48} isAnimationActive={false} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </Card>
           )}
 
-          <Card className="mt-6 gap-0 overflow-hidden py-0">
-            <table className="w-full text-sm">
+          <Card className="mt-6 gap-0 overflow-x-auto py-0">
+            <table className="min-w-[680px] w-full text-sm">
               <thead>
                 {table.getHeaderGroups().map((hg) => (
                   <tr key={hg.id} className="border-b">

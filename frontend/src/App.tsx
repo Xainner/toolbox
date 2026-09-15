@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState, createContext, useContext } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, createContext, useContext } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import Header from "@/components/Header";
 import Home from "@/pages/Home";
 import ToolPage from "@/pages/ToolPage";
-import StatsPage from "@/pages/StatsPage";
+import { ThemeProvider } from "@/lib/theme";
 import { fetchTools } from "@/lib/api";
 import type { ToolMeta } from "@/lib/types";
+
+const StatsPage = lazy(() => import("@/pages/StatsPage"));
 
 interface ToolsCtx {
   tools: ToolMeta[];
@@ -23,7 +25,6 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    document.documentElement.classList.add("dark");
     fetchTools()
       .then((t) => setTools(t))
       .catch((e) => setError(e.message))
@@ -33,14 +34,15 @@ export default function App() {
   const value = useMemo(() => ({ tools, loading, error }), [tools, loading, error]);
 
   return (
-    <Ctx.Provider value={value}>
-      <div className="min-h-dvh bg-background">
+    <ThemeProvider>
+      <Ctx.Provider value={value}>
+      <div className="min-h-dvh bg-background text-foreground">
         <Header />
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/tool/:toolId" element={<ToolPage />} />
-            <Route path="/stats" element={<StatsPage />} />
+            <Route path="/stats" element={<Suspense fallback={<div className="p-10 text-center text-muted-foreground">Cargando actividad…</div>}><StatsPage /></Suspense>} />
           </Routes>
         </main>
         <footer className="border-t py-6 text-center text-xs text-muted-foreground">
@@ -48,6 +50,7 @@ export default function App() {
         </footer>
       </div>
       <Toaster position="bottom-right" richColors closeButton />
-    </Ctx.Provider>
+      </Ctx.Provider>
+    </ThemeProvider>
   );
 }

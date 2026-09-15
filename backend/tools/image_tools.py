@@ -43,24 +43,31 @@ def _get_session(model: str):
 
 @register(ToolMeta(
     id="remove-bg", name="Quitar fondo (IA)", category="imagen",
-    description="Elimina el fondo de la imagen con IA local (rembg). Devuelve PNG transparente.",
+    description="Recorte local de alta calidad con presets, bordes refinados y máscara editable.",
     multiple=True, accept=RASTER, output_hint="PNG con fondo transparente", icon="eraser",
+    ui_mode="mask_editor", ai=True,
     options=[
-        {"name": "model", "label": "Modelo IA", "type": "select",
+        {"name": "preset", "label": "Calidad", "type": "select",
          "choices": [
-             {"value": "isnet-general-use", "label": "ISNet · alta precisión (recomendado)"},
-             {"value": "birefnet-general-lite", "label": "BiRefNet Lite · máxima precisión"},
-             {"value": "birefnet-portrait", "label": "BiRefNet Portrait · personas/retratos"},
-             {"value": "u2netp", "label": "Rápido · menor precisión"},
+             {"value": "fast", "label": "Rápido · U2NetP"},
+             {"value": "balanced", "label": "Equilibrado · ISNet"},
+             {"value": "quality", "label": "Alta calidad · BiRefNet General"},
+             {"value": "portrait", "label": "Retratos · BiRefNet Portrait"},
          ],
-         "default": "isnet-general-use",
+         "default": "quality",
          "help": "Los modelos grandes descargan una sola vez y quedan en el servidor"},
-        {"name": "post_process", "label": "Limpieza de máscara", "type": "switch", "default": True,
-         "help": "elimina salpicados y ruido en los bordes"},
-        {"name": "alpha_matting", "label": "Alpha matting (cabello/bordes finos)", "type": "switch",
-         "default": False},
+        {"name": "edge_mode", "label": "Tratamiento de bordes", "type": "select", "default": "decontaminate",
+         "choices": [
+             {"value": "none", "label": "Ninguno · bordes duros"},
+             {"value": "decontaminate", "label": "Descontaminar color · recomendado"},
+             {"value": "alpha", "label": "Alpha matting · cabello"},
+             {"value": "vitmatte", "label": "ViTMatte · máximo detalle"},
+         ], "group": "advanced", "advanced": True},
         {"name": "erode", "label": "Erosión de borde (px)", "type": "number", "default": 8,
-         "min": 0, "max": 40, "help": "solo con alpha matting"},
+         "min": 0, "max": 40, "help": "Solo con alpha matting",
+         "visible_when": {"name": "edge_mode", "equals": "alpha"}, "advanced": True},
+        {"name": "binary_mask", "label": "Máscara binaria", "type": "switch", "default": False,
+         "help": "Úsala solo para logos y objetos de borde completamente duro", "advanced": True},
         {"name": "post", "label": "Fondo resultante", "type": "select",
          "choices": [
              {"value": "transparent", "label": "Transparente"},
@@ -69,13 +76,16 @@ def _get_session(model: str):
          ],
          "default": "transparent"},
         {"name": "color", "label": "Color (hex)", "type": "text", "default": "#ffffff",
-         "placeholder": "#rrggbb", "help": "Solo si eliges color personalizado"},
+         "placeholder": "#rrggbb", "help": "Solo si eliges color personalizado",
+         "control": "color", "visible_when": {"name": "post", "equals": "color"}},
     ],
 ))
 def remove_bg(files: List[Path], options: dict, workdir: Path) -> List[Path]:
     files = filter_by_accept(files, RASTER)
     post = options.get("post", "transparent")
-    model = str(options.get("model") or "isnet-general-use")
+    preset = str(options.get("preset") or "quality")
+    model = {"fast": "u2netp", "balanced": "isnet-general-use",
+             "quality": "birefnet-general", "portrait": "birefnet-portrait"}.get(preset, "birefnet-general")
 
     try:
         from rembg import remove
@@ -84,11 +94,12 @@ def remove_bg(files: List[Path], options: dict, workdir: Path) -> List[Path]:
 
     session = _get_session(model)
 
-    alpha_matting = bool(options.get("alpha_matting", False))
+    edge_mode = str(options.get("edge_mode") or "decontaminate")
+    alpha_matting = edge_mode == "alpha"
     erode = int(options.get("erode") or 0)
     kwargs = {
         "session": session,
-        "post_process": bool(options.get("post_process", False)),
+        "post_process_mask": bool(options.get("binary_mask", False)),
     }
     if alpha_matting:
         try:
@@ -103,10 +114,19 @@ def remove_bg(files: List[Path], options: dict, workdir: Path) -> List[Path]:
     outs = []
     for src in files:
         inp = Image.open(src).convert("RGBA")
+        if len(files) == 1:
+            inp.save(workdir / "_source.png")
         buf_in = io.BytesIO()
         inp.save(buf_in, format="PNG")
         result = remove(buf_in.getvalue(), **kwargs)
         out_img = Image.open(io.BytesIO(result)).convert("RGBA")
+        if edge_mode == "decontaminate":
+            out_img = _decontaminate(inp, out_img)
+        elif edge_mode == "vitmatte":
+            out_img = _vitmatte(inp, out_img)
+
+        if len(files) == 1:
+            out_img.getchannel("A").save(workdir / "mascara.png")
 
         if post != "transparent":
             bg = Image.new("RGB", out_img.size)
@@ -128,6 +148,47 @@ def remove_bg(files: List[Path], options: dict, workdir: Path) -> List[Path]:
     if len(outs) == 1:
         return outs
     return [make_zip(outs, workdir / "imagenes-sin-fondo.zip")]
+
+
+def _decontaminate(source: Image.Image, cutout: Image.Image) -> Image.Image:
+    """Reduce halos estimando el color del fondo alrededor de los píxeles semitransparentes."""
+    import numpy as np
+    src = np.asarray(source.convert("RGB"), dtype=np.float32)
+    out = np.asarray(cutout.convert("RGBA"), dtype=np.float32).copy()
+    alpha = out[..., 3:4] / 255.0
+    bg_weight = 1.0 - alpha
+    from PIL import ImageFilter
+    weighted = Image.fromarray(np.uint8(src * bg_weight)).filter(ImageFilter.GaussianBlur(6))
+    weights = Image.fromarray(np.uint8(bg_weight[..., 0] * 255)).filter(ImageFilter.GaussianBlur(6))
+    bg = np.asarray(weighted, dtype=np.float32) / np.maximum(np.asarray(weights, dtype=np.float32)[..., None] / 255.0, 0.04)
+    edge = (alpha > 0.02) & (alpha < 0.98)
+    clean = (src - bg * (1.0 - alpha)) / np.maximum(alpha, 0.04)
+    out[..., :3] = np.where(edge, np.clip(clean, 0, 255), out[..., :3])
+    return Image.fromarray(np.uint8(np.clip(out, 0, 255)), "RGBA")
+
+
+def _vitmatte(source: Image.Image, cutout: Image.Image) -> Image.Image:
+    """Refina la máscara con el checkpoint local de ViTMatte; descarga una vez al volumen de modelos."""
+    try:
+        import numpy as np
+        import torch
+        from transformers import VitMatteImageProcessor, VitMatteForImageMatting
+    except ImportError as exc:
+        raise ToolError("ViTMatte requiere el perfil de IA completo") from exc
+    model_id = "hustvl/vitmatte-small-composition-1k"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    processor = VitMatteImageProcessor.from_pretrained(model_id)
+    model = VitMatteForImageMatting.from_pretrained(model_id).to(device).eval()
+    alpha = np.asarray(cutout.getchannel("A"), dtype=np.uint8)
+    trimap = np.where(alpha > 245, 255, np.where(alpha < 10, 0, 128)).astype(np.uint8)
+    inputs = processor(images=source.convert("RGB"), trimaps=Image.fromarray(trimap), return_tensors="pt")
+    with torch.no_grad():
+        prediction = model(**{k: v.to(device) for k, v in inputs.items()}).alphas
+    refined = torch.nn.functional.interpolate(prediction, size=(source.height, source.width), mode="bilinear", align_corners=False)
+    refined_alpha = Image.fromarray(np.uint8(refined[0, 0].clamp(0, 1).cpu().numpy() * 255))
+    result = source.copy()
+    result.putalpha(refined_alpha)
+    return result
 
 
 @register(ToolMeta(

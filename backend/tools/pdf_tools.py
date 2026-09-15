@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import List
 
 from pypdf import PdfReader, PdfWriter
-from pypdf.generic import NameObject
 
 from tools.common import ToolError, safe_stem, filter_by_accept, single
 from app.registry import ToolMeta, register
@@ -170,13 +169,13 @@ def compress_pdf(files: List[Path], options: dict, workdir: Path) -> List[Path]:
                                 buf = io.BytesIO()
                                 img.save(buf, format="JPEG", quality={"high": 80, "medium": 65, "low": 50}[quality])
                                 new_obj = doc.make_stream(buf.getvalue())
-                                new_obj[NameObject("/Type")] = NameObject("/XObject")
-                                new_obj[NameObject("/Subtype")] = NameObject("/Image")
-                                new_obj[NameObject("/Width")] = nw
-                                new_obj[NameObject("/Height")] = nh
-                                new_obj[NameObject("/ColorSpace")] = pikepdf.Name("/DeviceRGB")
-                                new_obj[NameObject("/BitsPerComponent")] = 8
-                                new_obj[NameObject("/Filter")] = pikepdf.Name("/DCTDecode")
+                                new_obj["/Type"] = pikepdf.Name("/XObject")
+                                new_obj["/Subtype"] = pikepdf.Name("/Image")
+                                new_obj["/Width"] = nw
+                                new_obj["/Height"] = nh
+                                new_obj["/ColorSpace"] = pikepdf.Name("/DeviceRGB")
+                                new_obj["/BitsPerComponent"] = 8
+                                new_obj["/Filter"] = pikepdf.Name("/DCTDecode")
                                 xobjs[key] = new_obj
                         except Exception:
                             continue

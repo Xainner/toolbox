@@ -23,6 +23,8 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+  --brand: oklch(0.62 0.21 30);
+  --brand-foreground: white;
 }
 
 .dark {
@@ -46,7 +48,7 @@
   --ring: oklch(0.556 0 0);
 }
 
-/* Acento de marca: rojo-coral estilo iLovePDF */
+/* Acento coral consistente en claro y oscuro */
 .dark {
   --brand: oklch(0.72 0.19 30);
   --brand-foreground: oklch(0.98 0.01 30);
@@ -86,5 +88,28 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand;
+  }
+}
+
+.checkerboard {
+  background-color: var(--card);
+  background-image:
+    linear-gradient(45deg, color-mix(in oklch, var(--muted) 70%, transparent) 25%, transparent 25%),
+    linear-gradient(-45deg, color-mix(in oklch, var(--muted) 70%, transparent) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, color-mix(in oklch, var(--muted) 70%, transparent) 75%),
+    linear-gradient(-45deg, transparent 75%, color-mix(in oklch, var(--muted) 70%, transparent) 75%);
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

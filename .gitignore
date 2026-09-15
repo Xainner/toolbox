@@ -21,3 +21,8 @@ backend/_smoke/
 backend/data/
 /logo.png
 models/
+
+# Tests frontend
+frontend/test-results/
+frontend/playwright-report/
+frontend/coverage/

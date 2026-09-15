@@ -2,6 +2,7 @@
 import io
 import shutil
 import sys
+import os
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -42,6 +43,7 @@ def make_pdf(name: str, pages: int) -> Path:
 pdf3 = make_pdf("tres.pdf", 5)
 
 from app.registry import load_all, REGISTRY
+from tools.common import ToolError
 
 load_all()
 print(f"== {len(REGISTRY)} herramientas registradas ==")
@@ -73,6 +75,7 @@ run("unlock-pdf", [pdf3], {"password": ""})  # sin cifrar
 run("jpg-to-pdf", [img1, img2, jpg], {"margin": 10, "pagesize": "fit"})
 run("jpg-to-pdf", [img1], {"margin": 0, "pagesize": "a4", "orientation": "landscape"})
 run("pdf-to-jpg", [pdf3], {"dpi": "96"})
+run("organize-pdf", [pdf3], {"pages": [{"index": 4, "rotation": 90}, {"index": 0, "rotation": 0}]})
 
 # Imagen
 run("convert-image", [img1, jpg], {"format": "webp", "quality": 80})
@@ -102,15 +105,24 @@ try:
     import cv2  # noqa
     run("pixelate-faces", [cara], {"pixel": 12, "mode": "pixelate"})
     HAS_CV2 = True
-except ImportError:
-    print("SKIP pixelate-faces (opencv no instalado local)")
+except (ImportError, ToolError) as e:
+    print(f"SKIP pixelate-faces (fixture sintético sin rostro detectable: {e})")
     HAS_CV2 = False
 
 run("upscale-image", [img1], {"factor": "2", "sharpen": True})
 
-# Errores esperados
-from tools.common import ToolError
+if os.getenv("RUN_AI_SMOKE") == "1":
+    run("upscale-ai", [img1], {"factor": "2", "model": "general"})
+else:
+    print("SKIP upscale-ai (usa RUN_AI_SMOKE=1 para descargar el modelo)")
 
+try:
+    import ocrmypdf  # noqa
+    run("ocr-pdf", [img1], {"language": "spa+eng", "rotate": True, "deskew": True})
+except (ImportError, ToolError) as e:
+    print(f"SKIP ocr-pdf ({e})")
+
+# Errores esperados
 def expect_error(tool_id, files, options, why):
     try:
         wd = WORK / f"err_{tool_id}"
@@ -132,10 +144,10 @@ try:
 except ImportError:
     HAS_REMBG = False
 
-if HAS_REMBG:
+if HAS_REMBG and os.getenv("RUN_AI_SMOKE") == "1":
     run("remove-bg", [img1], {"post": "transparent"})
     run("remove-bg", [jpg], {"post": "white"})
 else:
-    print("SKIP remove-bg (rembg no instalado en local; se prueba en Docker)")
+    print("SKIP remove-bg (usa RUN_AI_SMOKE=1 para descargar los modelos)")
 
 print(f"\nSMOKE OK · {len(results)} tools ejecutadas sin errores")

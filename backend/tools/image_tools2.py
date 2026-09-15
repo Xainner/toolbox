@@ -372,8 +372,8 @@ def pixelate_faces(files: List[Path], options: dict, workdir: Path) -> List[Path
 
 # ---------------------------------------------------------------- ampliar
 @register(ToolMeta(
-    id="upscale-image", name="Ampliar imagen", category="imagen",
-    description="Aumenta la resolución 2x o 4x con remuestreo de alta calidad y enfoque final.",
+    id="upscale-image", name="Ampliar imagen rápido", category="imagen",
+    description="Aumenta 2x o 4x con LANCZOS. Es rápido y no usa IA.",
     multiple=True, accept=COMMON, output_hint="imagen(es) ampliada(s)", icon="zoom",
     options=[
         {"name": "factor", "label": "Factor", "type": "select",

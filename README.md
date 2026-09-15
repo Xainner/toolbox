@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="#-caracter%C3%ADsticas"><img alt="Herramientas" src="https://img.shields.io/badge/herramientas-20-2563EB?style=for-the-badge"></a>
+  <a href="#-caracter%C3%ADsticas"><img alt="Herramientas" src="https://img.shields.io/badge/herramientas-23-2563EB?style=for-the-badge"></a>
   <a href="#-instalaci%C3%B3n-con-docker"><img alt="Docker" src="https://img.shields.io/badge/docker-ready-2496ED?style=for-the-badge&logo=docker&logoColor=white"></a>
   <a href="LICENSE"><img alt="Licencia" src="https://img.shields.io/badge/licencia-MIT-10B981?style=for-the-badge"></a>
 </p>
@@ -34,12 +34,11 @@ nada a la nube de nadie más.
 
 ## ✨ Características
 
-- **20 herramientas listas**: PDF (unir, dividir por rangos o páginas, comprimir, rotar,
+- **23 herramientas listas**: PDF (unir, dividir, organizar visualmente, OCR, comprimir, rotar,
   JPG↔PDF, marca de agua, proteger/desbloquear AES) e imagen (quitar fondo con IA local,
   convertir JPG/PNG/WEBP, comprimir, redimensionar).
-- **Quitar fondo con IA de verdad**: modelos locales [rembg](https://github.com/danielgatis/rembg)
-  seleccionables — ISNet (default), BiRefNet Lite y Portrait para retratos — con limpieza de
-  máscara y *alpha matting* opcional para cabello y bordes finos.
+- **IA local de verdad**: BiRefNet para recortes con máscara editable, Real-ESRGAN para ampliar
+  y OCRmyPDF/Tesseract para documentos buscables. CPU por defecto y NVIDIA GPU opcional.
 - **Registro de herramientas extensible**: agregar una herramienta nueva es crear **un archivo**
   en `backend/tools/`; el catálogo, el formulario, la validación y la página se generan solos.
 - **Drag & drop real**: reordena archivos antes de procesar (dnd-kit) — el resultado respeta tu orden.
@@ -71,7 +70,10 @@ nada a la nube de nadie más.
 | 📥 | **Convertir a JPG** | PNG, WEBP, GIF, BMP, TIFF y **HEIC de iPhone** → JPG por lotes |
 | 😄 | **Crear meme** | Texto clásico arriba/abajo con contorno automático |
 | 🙈 | **Pixelar caras** | Detección facial local (OpenCV) + pixelado o desenfoque |
-| 🔍 | **Ampliar imagen** | 2x / 4x con remuestreo LANCZOS y enfoque posterior |
+| 🔍 | **Ampliar imagen rápido** | 2x / 4x con remuestreo LANCZOS y enfoque posterior |
+| ✨ | **Ampliar con IA** | Real-ESRGAN 2x / 4x para fotos e ilustraciones |
+| 🔎 | **OCR a PDF buscable** | Español/inglés, orientación y enderezado automáticos |
+| 🗂️ | **Organizar PDF** | Reordenar, rotar y eliminar páginas con miniaturas |
 
 ## 🏗️ Arquitectura
 
@@ -107,6 +109,12 @@ docker compose up -d --build
 
 Abre `http://localhost:3090`. Listo.
 
+Para usar una GPU NVIDIA con Container Toolkit instalado:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+```
+
 > Los modelos de IA se descargan automáticamente al primer uso (~4 MB el rápido, ~178 MB ISNet)
 > y quedan persistidos en `./models/`. Las siguientes ejecuciones tardan segundos.
 
@@ -123,7 +131,11 @@ cd frontend
 npm install && npm run dev
 ```
 
-Smoke test del backend: `python smoke_test.py` (ejercita las 20 herramientas con archivos generados).
+Smoke test del backend: `python smoke_test.py`. Para incluir descargas y modelos de IA usa
+`RUN_AI_SMOKE=1 python smoke_test.py`.
+
+El benchmark de recorte acepta un dataset pareado en `images/` y `masks/` y compara MAE y
+F-score entre el flujo anterior y BiRefNet: `python benchmarks/background_quality.py ./dataset`.
 
 ## ➕ Agregar una herramienta nueva
 
@@ -161,6 +173,10 @@ Si el icono no existe en `frontend/src/lib/types.ts`, agrégalo ahí (Lucide).
 |---|---|---|
 | `/api/tools` | GET | Catálogo con metadata completa de cada herramienta |
 | `/api/tools/{id}/run` | POST | multipart: `files[]` + `options` (JSON string) → job |
+| `/api/tools/{id}/jobs` | POST | Crea un trabajo asíncrono y devuelve `202` |
+| `/api/jobs/{job_id}` | GET | Estado, progreso, errores y artefactos |
+| `/api/jobs/{job_id}/artifacts/{id}` | GET | Descarga un resultado, preview, máscara o TXT |
+| `/api/jobs/{job_id}/compose` | POST | Aplica una máscara corregida a un recorte |
 | `/api/download/{job_id}` | GET | Resultado del trabajo |
 | `/api/stats` | GET | Historial de trabajos (SQLite) |
 | `/api/health` | GET | Estado + número de herramientas |

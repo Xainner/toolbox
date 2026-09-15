@@ -1,6 +1,8 @@
 services:
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      target: cpu
     container_name: toolbox-api
     restart: unless-stopped
     volumes:
@@ -8,6 +10,9 @@ services:
       - ./models:/srv/models
     environment:
       - TZ=America/Costa_Rica
+      - TOOLBOX_WORKERS=2
+      - TOOLBOX_AI_WORKERS=1
+      - TOOLBOX_JOB_TTL_HOURS=24
 
   web:
     build: ./frontend

@@ -21,6 +21,8 @@ class ToolMeta:
     output_hint: str
     icon: str
     options: List[dict] = field(default_factory=list)
+    ui_mode: str = "generic"
+    ai: bool = False
 
 
 @dataclass
@@ -67,4 +69,6 @@ def asdict(meta: ToolMeta) -> dict:
         "output_hint": meta.output_hint,
         "icon": meta.icon,
         "options": meta.options,
+        "ui_mode": meta.ui_mode,
+        "ai": meta.ai,
     }
