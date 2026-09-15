@@ -20,6 +20,7 @@ import {
   ScanText,
   PanelsTopLeft,
   Sparkles,
+  Shirt,
 } from "lucide-react";
 
 /** Opción de formulario declarada por una herramienta */
@@ -103,6 +104,7 @@ export const TOOL_ICONS: Record<string, LucideIcon> = {
   scantext: ScanText,
   panels: PanelsTopLeft,
   sparkles: Sparkles,
+  shirt: Shirt,
 };
 
 export function toolIcon(key: string): LucideIcon {

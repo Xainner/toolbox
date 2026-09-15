@@ -1,0 +1,14 @@
+{
+  "black-shirt-v1": {
+    "name": "Camisa negra sola",
+    "image": "black-shirt-v1.png",
+    "canvas": [1122, 1402],
+    "print_box": [295, 250, 827, 930]
+  },
+  "female-black-shirt-v1": {
+    "name": "Modelo femenina con camisa negra",
+    "image": "female-black-shirt-v1.png",
+    "canvas": [1122, 1402],
+    "print_box": [315, 245, 807, 910]
+  }
+}
