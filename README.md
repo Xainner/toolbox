@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="#-caracter%C3%ADsticas"><img alt="Herramientas" src="https://img.shields.io/badge/herramientas-23-2563EB?style=for-the-badge"></a>
+  <a href="#-caracter%C3%ADsticas"><img alt="Herramientas" src="https://img.shields.io/badge/herramientas-24-2563EB?style=for-the-badge"></a>
   <a href="#-instalaci%C3%B3n-con-docker"><img alt="Docker" src="https://img.shields.io/badge/docker-ready-2496ED?style=for-the-badge&logo=docker&logoColor=white"></a>
   <a href="LICENSE"><img alt="Licencia" src="https://img.shields.io/badge/licencia-MIT-10B981?style=for-the-badge"></a>
 </p>
@@ -34,7 +34,7 @@ nada a la nube de nadie más.
 
 ## ✨ Características
 
-- **23 herramientas listas**: PDF (unir, dividir, organizar visualmente, OCR, comprimir, rotar,
+- **24 herramientas listas**: PDF (unir, dividir, organizar visualmente, OCR, comprimir, rotar,
   JPG↔PDF, marca de agua, proteger/desbloquear AES) e imagen (quitar fondo con IA local,
   convertir JPG/PNG/WEBP, comprimir, redimensionar).
 - **IA local de verdad**: BiRefNet para recortes con máscara editable, Real-ESRGAN para ampliar
@@ -72,6 +72,7 @@ nada a la nube de nadie más.
 | 🙈 | **Pixelar caras** | Detección facial local (OpenCV) + pixelado o desenfoque |
 | 🔍 | **Ampliar imagen rápido** | 2x / 4x con remuestreo LANCZOS y enfoque posterior |
 | ✨ | **Ampliar con IA** | Real-ESRGAN 2x / 4x para fotos e ilustraciones |
+| 👕 | **Mockup de producto** | Compón un diseño sobre plantillas de camisa (escala, posición y opacidad) |
 | 🔎 | **OCR a PDF buscable** | Español/inglés, orientación y enderezado automáticos |
 | 🗂️ | **Organizar PDF** | Reordenar, rotar y eliminar páginas con miniaturas |
 

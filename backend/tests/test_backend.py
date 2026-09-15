@@ -29,9 +29,14 @@ class ToolboxApiTests(unittest.TestCase):
         Image.new("RGB", (24, 16), "coral").save(output, "PNG")
         return output.getvalue()
 
-    def test_catalog_has_23_tools_and_extended_metadata(self):
+    def test_catalog_matches_registry_and_extended_metadata(self):
         tools = self.client.get("/api/tools").json()["tools"]
-        self.assertEqual(len(tools), 23)
+        from app.registry import REGISTRY
+
+        # Dinamico: cualquier herramienta nueva registrada debe aparecer sin
+        # tener que actualizar el numero en el test.
+        self.assertEqual(len(tools), len(REGISTRY))
+        self.assertGreaterEqual(len(tools), 24)
         remove_bg = next(tool for tool in tools if tool["id"] == "remove-bg")
         self.assertEqual(remove_bg["ui_mode"], "mask_editor")
         self.assertTrue(remove_bg["ai"])
