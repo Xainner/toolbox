@@ -27,6 +27,9 @@ from tools.pdf_tools import make_zip
         {"name": "deskew", "label": "Enderezar páginas", "type": "switch", "default": True},
         {"name": "sidecar", "label": "Incluir texto .txt", "type": "switch", "default": False,
          "advanced": True},
+        {"name": "image_dpi", "label": "DPI de imágenes", "type": "number", "default": 300,
+         "min": 72, "max": 600, "advanced": True,
+         "help": "solo aplica cuando subes imágenes en vez de PDF"},
     ],
 ))
 def ocr_pdf(files: List[Path], options: dict, workdir: Path) -> List[Path]:
@@ -40,15 +43,25 @@ def ocr_pdf(files: List[Path], options: dict, workdir: Path) -> List[Path]:
         raise ToolError("OCRmyPDF no está disponible en este despliegue") from exc
 
     outputs = []
+    image_dpi = int(options.get("image_dpi") or 300)
     for src in files:
         out = workdir / f"{safe_stem(src.name)}_buscable.pdf"
         sidecar = workdir / f"{safe_stem(src.name)}_texto.txt" if options.get("sidecar") else None
+        call_kwargs = {
+            "language": [p for p in str(options.get("language") or "spa+eng").split("+")],
+            "rotate_pages": bool(options.get("rotate", True)),
+            "deskew": bool(options.get("deskew", True)),
+            "skip_text": True,
+            "output_type": "pdfa",
+            "sidecar": sidecar,
+            "progress_bar": False,
+        }
+        # OCRmyPDF exige --image-dpi cuando la entrada es una imagen sin DPI
+        # en sus metadatos (capturas de pantalla, fotos, etc).
+        if src.suffix.lower() != ".pdf":
+            call_kwargs["image_dpi"] = image_dpi
         try:
-            ocrmypdf.ocr(
-                src, out, language=[p for p in str(options.get("language") or "spa+eng").split("+")],
-                rotate_pages=bool(options.get("rotate", True)), deskew=bool(options.get("deskew", True)),
-                skip_text=True, output_type="pdfa", sidecar=sidecar, progress_bar=False,
-            )
+            ocrmypdf.ocr(src, out, **call_kwargs)
         except Exception as exc:
             raise ToolError(f"No se pudo aplicar OCR a {src.name}: {exc}") from exc
         outputs.append(out)
@@ -119,7 +132,7 @@ def _get_upscaler(model_name: str, factor: int):
     elif factor == 2:
         scale, blocks = 2, 23
         filename = "RealESRGAN_x2plus.pth"
-        url = "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/RealESRGAN_x2plus.pth"
+        url = "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth"
     else:
         scale, blocks = 4, 23
         filename = "RealESRGAN_x4plus.pth"
